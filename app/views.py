@@ -4,39 +4,15 @@ from app import app, lm
 from app.forms import ExampleForm, LoginForm
 from app.models import User
 
-
-@app.route('/')#home page route 
+#Home Page
+@app.route('/') 
 def index():
 	return render_template('index.html')
 
+@app.route('/admin/')
+def admin_panel():
+    return render_template('admin_panel.html')
 
-@app.route('/checkout/' ,methods = ['GET','POST'])
-def posts():
-    form = ExampleForm() # not sure if we are going with form handling completely on be yet so leaving jic
-    return render_template('checkout.html', form=form)#checkout page route
-
-
-@app.route('/paymentComplete/')
-def new():
-    
-	return render_template('paymentComplete.html')
-
-#another feature we can look at
-@app.route('/wishlist/')
-@login_required
-def save():
-	form = ExampleForm()
-	if form.validate_on_submit():
-		print("salvando os dados:")
-		print(form.title.data)
-		print(form.content.data)
-		print(form.date.data)
-		flash('Dados salvos!')
-	return render_template('new.html', form=form)
-
-@app.route('/view/<id>/')
-def view(id):
-	return render_template('view.html')
 
 # === User login methods === 
 
@@ -45,7 +21,12 @@ def before_request():
     g.user = current_user
 
 @lm.user_loader
-def load_user(id):
+def load_user(email):
+    if email not in User:
+        return
+
+    user = User()
+    user.email = email
     return User.query.get(int(id))
 
 @app.route('/login/', methods = ['GET', 'POST'])
