@@ -1,4 +1,4 @@
-This is the current MySql script for our data base construction, Any updates to it will be added to the changelog at the bottom.
+This is the current MySql script for our data base construction, Any updates to it will be added to the changelog / potential future updates section at the bottom.
 
 
 create table Product
@@ -54,3 +54,6 @@ create table sale
 Change Log:
 Current_Cart_id in Users originaly was (int not null) causing an issue when trying to create the first cart or users, both requiring eachother to have already been created(Now just int(line 19)) 10/29/2024
 Making users_email in users to be a unique index (this is added at the step before the alter table for adding the foreign key constraint.(Line 28)) 10/29/2024
+
+Potential Future Changes:
+adding indexing to all fields (besides stock) in product to increase query speed
