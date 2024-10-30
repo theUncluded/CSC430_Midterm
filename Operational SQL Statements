@@ -67,7 +67,7 @@ CART AND PRODUCT_PAIR SECTION
 
 -- cart operations
 
--- insert into cart
+-- insert into cart (create product pair)
 	-- Step 1. Ensure that the product you want to insert isn't already in the cart (we do this by checking if the product exists within the cart), 
 		 select product_id from product_pair -- this statement will return the product id if it is found in the cart, and return nothing if it dosent exist
          	 where cart_id = 3 and product_id = 2; -- first me declare the cart we are searching through cart id, next we declare the product id that we are looking for in the cart 
@@ -91,11 +91,19 @@ CART AND PRODUCT_PAIR SECTION
 	join Product_pair on users.current_cart_id = Product_pair.cart_id -- this join statement lets us find all product pairs associated with a users current cart id.
 	where users_id = 1; -- User id picks which user it is.
 
+-- clear cart
+	delete from Product_pair -- This deletes all product pairs associated with the cart.
+	where cart_id = 1 -- 1 is cart id example
+
+-- remove a product_pair from a cart.
+	delete from Product_pair -- deletes the product pairs from cart id of product id
+	where cart_id = 1 and product_id = 1;-- example cart id and product id
+
 
 SALE SECTION.
 
 -- Finalize a sale
-	-- step 1 (before purchasing). STORE THE CURRENT CARTS CONTENTS, AND CART ID IN SESSION VARIABLE AND RE CONFIRM IF THEY WANT TO PURCHASE.(the first thing we must do is ensure that the no other user accessing the same account can change the contents of what is being purchased! store the items currently in the cart, and then display those contents in a confirmation page.)
+	-- step 1 (before purchasing). STORE THE CURRENT CARTS CONTENTS, CART ID, AND PAYMENT METHOD USED IN SESSION VARIABLE AND RE CONFIRM IF THEY WANT TO PURCHASE.(the first thing we must do is ensure that the no other user accessing the same account can change the contents of what is being purchased! store the items currently in the cart, and then display those contents in a confirmation page.)
 
 	-- step 2 (after confirming purchase and finalizing sale). We must create and set a new cart so that any new updates or changes to the users current cart occur there rather than in our purchase.
 		-- Refer to users section to see how to create a new cart, and set that cart as the new current cart.
@@ -118,5 +126,6 @@ SALE SECTION.
         	set payment_complete = true -- set payment recieved to true
 		where cart_id = 1; -- for carts with the corosponding cart id, 1 is example (grab from session)
 
+	-- step 7. Clean up session variables.
 
 
