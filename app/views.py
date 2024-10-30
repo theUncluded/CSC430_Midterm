@@ -1,6 +1,6 @@
 from flask import url_for, redirect, render_template, flash, g, session
 from flask_login import login_user, logout_user, current_user, login_required
-from app import app, lm
+from app import app, db, lm
 from app.forms import ExampleForm, LoginForm
 from app.models import User
 
@@ -9,7 +9,18 @@ from app.models import User
 def index():
 	return render_template('index.html')
 
+def index2():
+    products_db = Product.query.
+
+    #Debug statement, comment out for demo
+    with engine.connect() as conn:
+        for row in conn.execute(products_db)
+        print(row)
+    
+    return jsonify(products_db)
+
 @app.route('/admin/')
+@admin_only
 def admin_panel():
     return render_template('admin_panel.html')
 
@@ -23,7 +34,7 @@ def before_request():
 @lm.user_loader
 def load_user(email):
     if email not in User:
-        return
+        return 
 
     user = User()
     user.email = email
@@ -45,3 +56,14 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+# === Cart Functions ===
+
+def add_to_cart(product_id , user_id):
+    user = user_id
+    product = Product.query.filter(Product.id == product_id)
+    cart_item = Cart(product=product , )
+    db.session.add(cart_item)
+    db.session.commit()
+
+    return 
