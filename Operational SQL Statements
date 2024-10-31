@@ -1,5 +1,5 @@
 -- This document will hold the list of sql statements used for accessing and updating data in our data base. for those unfamiliar with sql (-- ) causes a comment for the rest of that line, so any section after those until the end of that line is for comments.
--- make sure to store the users id as a session variable, we will be using it for looking up data.
+
 -- Now Adding transactions, This will ensure that our data stays consistent even if multiple clients attempt to interact with critical sections.
 -- note to self Use "set transaction isolation level serializable;" before starting the transaction in order to make it so statements lock after select satements
 
@@ -11,6 +11,10 @@ USERS SECTION
 	-- Finds the current cart for a user using users_id
 		   select max(cart_id) from cart
 		   where users_id = "1"; -- 1 is example users_id
+	-- Finds the current cart for a specific user using email,
+		   select max(cart_id) from cart
+		   join users on cart.users_id = users.users_id
+		   where users_email = "steve.com";
   -- Create a new cart for an existing user (refer to step 2 AND 3 of How to create a new user!)
   -- Set the users current cart to the most recent created cart (reffer to step 3 of How to create a new user!)
   -- Password Verification, Check User Log in step 2.
@@ -25,26 +29,12 @@ USERS SECTION
  
 -- step 2 creates a new cart for an existing user
 	   insert into cart (users_id) -- insert a cart for the new user
-	   values (1); -- 1 is an example for the users id
+	   select users_id from users where users_email = "steve.com"; -- find the new users user id, using the users email (which should be a unique entry that is indexd taking only 1 step.) 
  
 -- step 3 sets the users current cart to the most recently created cart. (try to only create new carts after the previous cart is used for a purchase or has been deleted for some reason.)
 	   update users
 	   set current_cart_id = (select max(cart_id) from cart where cart.users_id = users.users_id) -- sets the cart id to be equivalent to the max cart id associated with that user (the newest created cart for that user)
-	   where users_id = 1; -- 1 is an example for the users id.
--- full function!
-           start transaction;
-	   insert into users (users_name,users_email,users_password) -- (location and card information comes later on (or we can make it be done on account creation for simplicity sake)) 
-	   values ("Final","final.com","finalword");  -- example data. ordering of data matches the order in the above statement (name,email,password) use form data inputs
-       	   select users_id from users 
-	   where users_email = "final.com"; -- use the form input for the users email
-	   insert into cart (users_id) -- insert a cart for the new user
-	   values (4); -- session variable for users id
-	   update users
-	   set current_cart_id = (select max(cart_id) from cart where cart.users_id = users.users_id) -- sets the cart id to be equivalent to the max cart id associated with that user (the newest created cart for that user)
-	   where users_id = 4; -- session variable for users id
-       commit; -- if their are no errors we commit, if there are errors we roll back with rollback;
-
-
+	   where users_email = "steve.com"; -- the where clause can be replaced by any unique index (email or id of the user).
 
 -- User Log in.
 
