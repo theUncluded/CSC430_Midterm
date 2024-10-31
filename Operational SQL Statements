@@ -148,5 +148,27 @@ commit;
 		where cart_id = 1; -- for carts with the corosponding cart id, 1 is example (grab from session)
 
 	-- step 7. Clean up session variables.
+WIP for sale
 
+set transaction isolation level serializable; -- reads now create a lock
+start transaction; -- start locking other sessions
+select product_pair.product_id,product_amount, price from product_pair -- find all products, the price of each product, and the amount purchased!
+join product on product_pair.product_id  = product.product_id
+join users on product_pair.cart_id = users.current_cart_id -- in the users current cart.
+where users_id = 3; -- using users id
+-- using back end, multiply each price by the corisponding amount, and then add together
+-- display this information to the user and ask for them to confirm. (grab payment used from session) if cancel we roll back, if confirm we continue
+-- find current cart id!
+insert into sale (cart_id,payment_method,total_amount) -- the cart id that is stored in variable, (make the user select a payment method before paying and store it in session, and the total_amount that was calculated in step 4.) The current date and time is automatically put in upon creation. Payment completion is automatically set to false.
+values(3,"payment",12.45); -- values to be inserted
+-- pretending to ping payment, recieved!
+update sale
+set payment_complete = true -- set payment recieved to true
+where cart_id = 1; -- use the cart id for current cart found above.
+-- make a new cart for user using cart creation function Create_cart_for_user(user_id)
+commit; -- save the changes made
+-- return out of function.
+
+
+-- implement try catch rollback incase of any errors, and maybe don't call the function internally (altho it does work having more locks then needed can cause issues).
 
