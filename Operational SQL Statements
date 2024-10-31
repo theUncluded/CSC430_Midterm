@@ -104,7 +104,7 @@ SALE SECTION.
 
 -- Finalize a sale
 	-- step 1 (before purchasing). STORE THE CURRENT CARTS CONTENTS, CART ID, AND PAYMENT METHOD USED IN SESSION VARIABLE AND RE CONFIRM IF THEY WANT TO PURCHASE.(the first thing we must do is ensure that the no other user accessing the same account can change the contents of what is being purchased! store the items currently in the cart, and then display those contents in a confirmation page.)
-
+		-- Check view all product pairs in users current cart
 	-- step 2 (after confirming purchase and finalizing sale). We must create and set a new cart so that any new updates or changes to the users current cart occur there rather than in our purchase.
 		-- Refer to users section to see how to create a new cart, and set that cart as the new current cart.
 
