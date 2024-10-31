@@ -112,6 +112,16 @@ CART AND PRODUCT_PAIR SECTION
 
 
 SALE SECTION.
+example for myself later
+set transaction isolation level serializable;
+start transaction;  
+select product_id,product_amount from users -- return all product id and amount pairs associated with users
+	join Product_pair on users.current_cart_id = Product_pair.cart_id -- this join statement lets us find all product pairs associated with a users current cart id.
+	where users_id = 3; -- User id picks which user it is.
+rollback;
+commit;
+
+
 
 -- Finalize a sale
 	-- step 1 (before purchasing). STORE THE CURRENT CARTS CONTENTS, CART ID, AND PAYMENT METHOD USED IN SESSION VARIABLE AND RE CONFIRM IF THEY WANT TO PURCHASE.(the first thing we must do is ensure that the no other user accessing the same account can change the contents of what is being purchased! store the items currently in the cart, and then display those contents in a confirmation page.)
