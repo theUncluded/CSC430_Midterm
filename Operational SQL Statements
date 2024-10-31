@@ -1,5 +1,8 @@
 -- This document will hold the list of sql statements used for accessing and updating data in our data base. for those unfamiliar with sql (-- ) causes a comment for the rest of that line, so any section after those until the end of that line is for comments.
 
+-- Now Adding transactions, This will ensure that our data stays consistent even if multiple clients attempt to interact with critical sections.
+-- note to self Use "set transaction isolation level serializable;" before starting the transaction in order to make it so statements lock after select satements
+
 USERS SECTION
 -- component statements (users)
 	-- Finds the user id given an email
@@ -68,12 +71,10 @@ CART AND PRODUCT_PAIR SECTION
 -- cart operations
 
 -- insert into cart (create product pair)
-	-- Step 1. Ensure that the product you want to insert isn't already in the cart (we do this by checking if the product exists within the cart), 
-		 select product_id from product_pair -- this statement will return the product id if it is found in the cart, and return nothing if it dosent exist
-         	 where cart_id = 3 and product_id = 2; -- first me declare the cart we are searching through cart id, next we declare the product id that we are looking for in the cart 
+	-- Step 1. (no longer needed due to change in database, (refer to changes made 10/30/2024) Use to be that we had to check if the product already existed in the cart
     	-- Step 2. create the product pair.    
 		  insert into product_pair (cart_id,product_id,product_amount) -- the cart the item belongs to, the item that is being put into that cart, the amount of that item being added
-		  values (3,1,5);
+		  values (3,1,5); -- if the product already exists in the cart, the statement will error out
          
 -- modify the quantity of an item in the cart
 	-- Step 1. check if the product exists in the cart (refer to step 1 of inserting into cart)
