@@ -50,10 +50,14 @@ create table sale
  foreign key (cart_id) references cart(cart_id)
  );
 
+alter table product_pair
+add constraint no_dupe unique (cart_id , product_id);
+
 
 Change Log:
 Current_Cart_id in Users originaly was (int not null) causing an issue when trying to create the first cart or users, both requiring eachother to have already been created(Now just int(line 19)) 10/29/2024
 Making users_email in users to be a unique index (this is added at the step before the alter table for adding the foreign key constraint.(Line 28)) 10/29/2024
+
 
 Potential Future Changes:
 adding indexing to all fields (besides stock) in product to increase query speed
