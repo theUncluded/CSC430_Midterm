@@ -1,0 +1,2 @@
+sale_id,cart_id,date_time,payment_method,total_amount
+4,1,10/31/2024 11:25p.m.,card,20

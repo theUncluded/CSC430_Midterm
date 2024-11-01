@@ -1,0 +1,24 @@
+users:
+  - users_id: 1
+    users_name: "John Doe"
+    users_email: "john.doe@example.com"
+    users_password: "hashed_password_1"
+    address: "123 Elm Street, City, State, Zip"
+    card_info: "encrypted_card_info_1"
+    current_cart_id: 101
+
+  - users_id: 2
+    users_name: "Jane Smith"
+    users_email: "jane.smith@example.com"
+    users_password: "hashed_password_2"
+    address: "456 Maple Avenue, City, State, Zip"
+    card_info: "encrypted_card_info_2"
+    current_cart_id: 102
+
+  - users_id: 3
+    users_name: "Alice Johnson"
+    users_email: "alice.johnson@example.com"
+    users_password: "hashed_password_3"
+    address: "789 Oak Road, City, State, Zip"
+    card_info: "encrypted_card_info_3"
+    current_cart_id: 103

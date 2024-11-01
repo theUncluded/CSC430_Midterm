@@ -1,8 +1,7 @@
 from flask import url_for, redirect, render_template, flash, g, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm
-from app.forms import ExampleForm, LoginForm
-from app.models import User
+from app.model import *
 
 #Home Page
 @app.route('/') 
@@ -10,12 +9,7 @@ def index():
 	return render_template('index.html')
 
 def index2():
-    products_db = Product.query.
-
-    #Debug statement, comment out for demo
-    with engine.connect() as conn:
-        for row in conn.execute(products_db)
-        print(row)
+    products_db = pull_all_product()
     
     return jsonify(products_db)
 

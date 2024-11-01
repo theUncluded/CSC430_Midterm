@@ -1,56 +1,80 @@
-from app import db
-# This is the database model code to instantiate a db with the following columns, keys, and so forth
-# If we decide to move to a pre-populated database, refer to prepop_model.py
-class Product(db.Model):
-	product_id = db.Column(db.Integer, primary_key = True)
-	product_name = db.Column(db.String(100))
-	product_price = db.Column(db.double(10,2))
-	product_stock = db.Column(db.Integer)
+import os
+import sys
+import pymongo
+from flask import Flask, jsonify
+from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 
-class Cart(db.Model):
-    cart_id = db.Column(db.Integer , primary_key = True)
-    user_id = db.Column(db.Integer , db.ForeignKey(User.user_id))
 
-class Product_Cart(db.Model):
-    cart_id = db.Column(db.Integer, db.ForeignKey(Cart.cart_id) , unique = True)
-    product_id = db.Column(db.Integer , db.ForeignKey(Product.product_id))
-    product_quantity = db.Column(db.Integer)
+#make a connection with mongodb && test connection
+def conn_to_mongo():
+    uri = os.environ['MONGO_URI']
+    client = MongoClient(uri , server_api=ServerApi('1'))
 
-class User(db.Model):
-    user_id = db.Column(db.Integer, primary_key = True)
-    password = db.Column(db.String(500), unique = True)
-    name = db.Column(db.String(100))
-    email = db.Column(db.String(120), unique = True)
-    address = db.Column(db.String(255))
-    card_number = db.Column(db.String(16), unique = True)
-    card_cvv = db.Column(db.String(3))
-    privledge = db.Column(db.Integer)
+    #return exception if connection fails
+    try:
+        client.admin.command('ping')
+        print("Pinged your deployment. You successfully connected to MongoDB!")
+        return client
+    except Exception as e:
+        print(e)
 
-    def is_privledged(self):
-        if self.privledge > 0:
-            return True
-        
-        return False
+#db collection connects and defines the mongodb collection 
+def db_collection_conn(collection_name):
+    client = conn_to_mongo()
 
-    def is_authenticated(self):
-        return True
+    #define db name and collection for specific collection to reference: cart,product,sale,product_pair,users
+    DB_NAME = "csc430"
+    COLL_NAME = collection_name
 
-    def is_active(self):
-        return True
+    MONGODB_COLLECTION = client[DB_NAME][COLL_NAME]
 
-    def is_anonymous(self):
-        return False
+    return MONGODB_COLLECTION
 
-    def get_id(self):
-        return str(self.id)
+#pull all product information from mongodb will return a jsonified product list of all product information: id,price,name,stock (NOT NEAT)
+def pull_all_product():
+    collection = db_collection_conn("product")
+
+    prod_list = [] #empty dict to append products to
+    for x in collection.find():
+        prod_list.append(x)
+        print(x)#debug
     
-class Sales_History(db.Model):
-    sale_id = db.Column(db.Integer , primary_key = True)
-    cart_id = db.Column(db.Integer , db.ForeignKey(Cart.cart_id))
-    date_time = db.Column(db.date_time)
-    sale_total = db.Column(db.double(10,2))
+    return jsonify(prod_list)
 
-#With all tables defined call create_db to create the table schema in a db
-#IF models are defined in other modules, sqlalch will NOT know about them
-with app.app_context():
-    db.create_all()
+#add_a_product will add a parametered product to the database
+def add_a_product(p_name,p_id,p_stock,p_price):
+    collection = db_collection_conn("product")
+    new_product = {"product_id" : p_id , "product_name" : p_name , "price" : p_price , "stock" : p_stock}
+    try:
+        push_product = collection.insert_one(new_product)
+        print("Product push successful")
+    except Exception as e:
+        print(e)
+
+#product_sale handles an item being sold, subtracting from the sold item's stock by the quantity sold, singular function cannot do multiple products
+def product_sale(p_id,quantity_sold):#p_id or product id is the id of the product that was sold, quantity sold is an int representing... the quantity sold
+    collection = db_collection_conn("product")
+    query = {"product_id" : p_id} 
+    get_query = collection.find(query)#find product via id
+    
+    for key , val in get_query.items():#using the key val pair of mongo's layout, find the stock column and allocate the value to variable 'stock'
+        if 'stock' in key:
+            stock = val
+            print(val)
+    stock = stock - quantity_sold #subtract the quantity sold from stock 
+
+    new_value = {"$set": {"stock" : stock}} #define the new value set for stock 
+
+    collection.update_one(query,new_value) # update the original query with the new stock value
+
+#remove_a_product removes a product row from the database via the id
+def remove_a_product(p_id):
+    collection = db_collection_conn("product")
+    query = {"product_id" : p_id}
+
+    try:
+        collection.delete_one(query)
+        print("Success")
+    except Exception as e:
+        print("Failure, please check the product id passed. ", e)
