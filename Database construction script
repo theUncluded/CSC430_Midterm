@@ -1,7 +1,7 @@
 This is the current MySql script for our data base construction, Any updates to it will be added to the changelog / potential future updates section at the bottom.
 
 
-create table Product
+create table product
   (
   product_id int primary key auto_increment not null,
   product_name varchar(100) not null,
@@ -31,7 +31,7 @@ on users (users_email);
 alter table users
   add foreign key(current_cart_id) references cart(cart_id);
 
-create table Product_pair
+create table product_pair
   (
   cart_id int not null,
   product_id int not null,
