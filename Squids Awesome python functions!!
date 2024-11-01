@@ -1,0 +1,44 @@
+#warning these python functions may be to cool and result in your eyes burning... yep deffinetly because they are good and not bad.
+import mysql.connector # how we connect to data base
+import bcrypt # what we will be using to hash and salt our passwords
+
+mydb = mysql.connector.connect( # we establish a connection with the data base
+    host = "localhost",
+    user = "root",
+    password = "examplepas",
+    database = "test"
+)
+cursor = mydb.cursor() # and create a cursor
+
+def hash_password(password): # function for hashing and salting a password
+    salt = bcrypt.gensalt()#generates a salt
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)# Hashs the password with the salt after converting it into binary
+    return hashed_password #returns the now hased password
+
+def check_password(password, hashed_password): # function to check if current inputer password is the same as the saved hashed password
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password)#turns the password into binary and then compares it with the hashed password
+
+
+#Please add error handeling before implementing, or implement error handling in 2nd production.
+def create_user(input_name,input_email,input_password): # function for creating a user by passing the inputed name, email, and password (will return an error if a user with the same email alrdy exists PLEASE ADD ERROR HANDELING.
+    input_password = hash_password(input_password) #hash our example password
+    users_data = (input_name,input_email,input_password)
+    q1 = "insert into users (users_name,users_email,users_password)values (%s,%s,%s);" #list of sql queries we are using
+    q2 = "select users_id from users where users_email = %s;"
+    q3 = "insert into cart (users_id) values (%s);"
+    q4 = "update users set current_cart_id = (select max(cart_id) from cart where cart.users_id = users.users_id) where users_id = %s;"
+    cursor.execute("start transaction;")
+    cursor.execute(q1,(users_data))
+    cursor.execute(q2,(input_email,))
+    result = cursor.fetchall() #should always return only 1 row
+    for row in result:
+        users_id = row
+        current_users_id = users_id[0] #user id to store in session (will be returned by function if we want to automatically log someone in to the account they created.)
+    cursor.execute(q3,(current_users_id,))
+    cursor.execute(q4,(current_users_id,))
+    mydb.commit()
+    return current_users_id
+#end of function
+
+user_id = create_user("Exampledataname","Exampledatapassword","example@exampleemail.com")#user name email password
+print (user_id)
