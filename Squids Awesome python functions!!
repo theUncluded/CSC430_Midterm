@@ -1,5 +1,5 @@
 #warning these python functions may be to cool and result in your eyes burning... yep deffinetly because they are good and not bad.
-import mysql.connector # how we connect to data base
+import mysql.connector # how we connect to data base(WARNING THE PIP INSTALL FOR THIS IS NOT mysql-connector. IT IS mysql-connector-python.)
 import bcrypt # what we will be using to hash and salt our passwords
 
 mydb = mysql.connector.connect( # we establish a connection with the data base
