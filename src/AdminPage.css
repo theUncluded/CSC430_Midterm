@@ -1,0 +1,14 @@
+body { font-family: 'Public Sans', sans-serif; }
+
+.AdminPage {
+    font-family: 'Public Sans', sans-serif;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Change from center to flex-start */
+    padding-top: 100px; /* Adjust padding to position closer to the navbar */
+    min-height: 90vh; /* Ensures the content is centered vertically within the viewport */
+    background: #ffffff; /* Optional: add a background color to distinguish the admin page */
+  }
+  
