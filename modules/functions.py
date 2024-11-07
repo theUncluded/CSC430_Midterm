@@ -8,13 +8,17 @@ ERROR_EMAIL_NOTFOUND = f"EMAIL %s NOT FOUND IN OUR SYSTEM. PLEASE REGISTER OR US
 
 
 # =======================SQL ACTIONS=======================
-
-mydb = mysql.connector.connect(#could potentially make this configurable with global vars
-    host = "localhost",
-    user = "root",
-    password = "1234",
-    database = "csc430"
-)
+#connects to db and returns db obj as future callable
+def conn_2_db():
+    mydb = mysql.connector.connect(#could potentially make this configurable
+        host = "localhost",
+        user = "root",
+        password = "1234",
+        database = "csc430"
+    )
+    return mydb
+#outter vars meant for future functions
+mydb = conn_2_db()
 cursor = mydb.cursor()
 
 #call to close connection to db
@@ -26,7 +30,10 @@ def pull_product_list():
     QUERY = "select * from product"
     cursor.execute(QUERY)
     result = cursor.fetchall()
-    print(result) #debug , comment when finished
+    
+    for x in result:
+        print(result) #debug , comment when finished
+        
     return jsonify(result)
 
 
@@ -61,27 +68,62 @@ def hash_password(password):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)# Hashs the password with the salt after converting it into binary
     return hashed_password #returns the now hased password
 
-def create_user(input_name,input_email,input_password):
-    input_password = hash_password(input_password) #hash our example password
-    users_data = (input_name,input_email,input_password)
-    #list of sql queries to commit new user info to db
-    q1 = f"""insert into users (users_name,users_email,users_password) values ({input_name},{input_email},{input_password});
-            select users_id from users where users_email = {input_email};"""
-    q2 = f"""insert into cart (users_id) values (%s);
-            update users set current_cart_id = (select max(cart_id) from cart where cart.users_id = users.users_id) where users_id = %s;"""
+def create_user(input_name, input_email, input_password):
+    # Hash the password
+    input_password = hash_password(input_password)
+
+    # SQL Queries
+    insert_user_query = """
+        INSERT INTO users (users_name, users_email, users_password)
+        VALUES (%s, %s, %s);
+    """
+    
+    select_user_id_query = """
+        SELECT users_id FROM users WHERE users_email = %s;
+    """
+    
+    create_cart_query = """
+        INSERT INTO cart (users_id) VALUES (%s);
+    """
+    
+    update_current_cart_query = """
+        UPDATE users 
+        SET current_cart_id = (SELECT MAX(cart_id) FROM cart WHERE cart.users_id = users.users_id)
+        WHERE users_id = %s;
+    """
+
     try:
-        cursor.execute("start transaction;")
-        cursor.execute(q1)
-    except:
-        print("Account creation failed: EMAIL IN USE . Please login")
+        # Start transaction
+        cursor.execute("START TRANSACTION;")
+        
+        # Insert new user and handle duplicate emails
+        cursor.execute(insert_user_query, (input_name, input_email, input_password))
+        
+        # Retrieve the new user's ID
+        cursor.execute(select_user_id_query, (input_email,))
+        result = cursor.fetchone()
+        
+        if not result:
+            raise ValueError("Account creation failed: EMAIL IN USE. Please login.")
+        
+        current_users_id = result[0]
+        
+        # Create a cart for the new user
+        cursor.execute(create_cart_query, (current_users_id,))
+        
+        # Update the user's current cart ID
+        cursor.execute(update_current_cart_query, (current_users_id,))
+        
+        # Commit the transaction
+        mydb.commit()
 
-    result = cursor.fetchall() #should always return only 1 row
-    for row in result:
-        current_users_id = row[0] #user id to store in session (will be returned by function if we want to automatically log someone in to the account they created.)
-    cursor.execute(q2)
-    mydb.commit()
+        return current_users_id  # Optionally use this for automatic login
+        
+    except Exception as e:
+        #mydb.rollback()
+        print(f"Error: {e}")
+        return None
 
-    return current_users_id
 
 def check_password(password, hashed_password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password)#turns the password into binary and then compares it with the hashed password
@@ -93,3 +135,34 @@ def u_login(email,password, hashed_password):
         cursor.execute(EMAIL_QUERY)
     except:
         return jsonify(ERROR_EMAIL_NOTFOUND)
+    
+# ======================= Admin Functionalities ==========================
+
+#adds a x amount of stock to a product - allocated by its id
+def add_x_to_product_stock(x,product_id):
+    GET_CURR_STOCK_QUERY = f'select stock from product where product_id = {product_id};'
+    try:
+        cursor.execute(GET_CURR_STOCK_QUERY)
+        curr_stock = cursor.fetchone()[0]
+    except:
+        print("Failed to update value, please double check passed product_id")
+    
+    updated_stock = curr_stock + x
+    QUERY = f'''
+select * from product where product_id = {product_id};
+update product 
+set stock = {updated_stock}
+where product_id = {product_id}
+'''
+    try:
+        cursor.execute(QUERY)
+    except:
+        print("Addition statement failed! Reference database if issue persists")
+
+    return updated_stock
+# ======================= Sale Functionalities ==========================
+
+#removes a n amount of stock from a product
+def remove_x_from_product_stock():
+    return 0
+

@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, jsonify, redirect
 from modules import functions
+import pytest
 
-app = Flask('csc430')  
+app = Flask(__name__)  
 #Configuration of application, errors with config file lead to hard coding config in app
 #Fix soon
 #e_string = model.ENGINE_STRING
@@ -36,7 +37,7 @@ def login():
 def logout():
     return redirect('index.html')
 
-# =======================DEBUG=======================
+# ======================= DEBUG ==========================
 
 
 
