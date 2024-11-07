@@ -1,9 +1,11 @@
 import mysql.connector
 import bcrypt
 
-from flask import render_template, request, jsonify, redirect
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
+from flask import jsonify
+
+# =======================GLOBAL VARS=======================
+ERROR_EMAIL_NOTFOUND = f"EMAIL %s NOT FOUND IN OUR SYSTEM. PLEASE REGISTER OR USE A DIFFERENT EMAIL"
+
 
 # =======================SQL ACTIONS=======================
 
@@ -14,39 +16,6 @@ mydb = mysql.connector.connect(#could potentially make this configurable with gl
     database = "csc430"
 )
 cursor = mydb.cursor()
-
-def hash_password(password):
-    salt = bcrypt.gensalt()#generates a salt
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)# Hashs the password with the salt after converting it into binary
-    return hashed_password #returns the now hased password
-
-
-def check_password(password, hashed_password):
-    return bcrypt.checkpw(password.encode('utf-8'), hashed_password)#turns the password into binary and then compares it with the hashed password
-
-
-def create_user(input_name,input_email,input_password):
-    input_password = hash_password(input_password) #hash our example password
-    users_data = (input_name,input_email,input_password)
-    q1 = "insert into users (users_name,users_email,users_password)values (%s,%s,%s);" #list of sql queries we are using
-    q2 = "select users_id from users where users_email = %s;"
-    q3 = "insert into cart (users_id) values (%s);"
-    q4 = "update users set current_cart_id = (select max(cart_id) from cart where cart.users_id = users.users_id) where users_id = %s;"
-    cursor.execute("start transaction;")
-    cursor.execute(q1,(users_data))
-    cursor.execute(q2,(input_email,))
-    result = cursor.fetchall() #should always return only 1 row
-    for row in result:
-        users_id = row
-        current_users_id = users_id[0] #user id to store in session (will be returned by function if we want to automatically log someone in to the account they created.)
-    cursor.execute(q3,(current_users_id,))
-    cursor.execute(q4,(current_users_id,))
-    mydb.commit()
-    return current_users_id
-# test function to fill connected db with dummy data
-def user_test_db_fill():
-    user_id = create_user("Rich","Rich'sbadpassword","Rich2@exampleemail.com")#user name email password
-    print (user_id)#debug print
 
 #call to close connection to db
 def close_conn_2_db():
@@ -61,3 +30,66 @@ def pull_product_list():
     return jsonify(result)
 
 
+    
+# ======================= Cart Functions ==========================
+#assign user to cart table, try NOT to thread this with other existing carts
+def assign_to_cart(users_id):
+    
+    QUERY = f"insert into cart ({users_id})"
+    SEL_QUERY = f"select users_email from users where users_id = {users_id}" #match user email to passed id
+    
+    users_email = cursor.execute(SEL_QUERY)
+
+    cursor.execute(QUERY)#insert user_id of passed u_id into cart table
+
+    mydb.commit()
+
+#updates the current cart to be the most recently created cart
+def current_cart_db_update(users_email):
+    
+    MOST_RECENT_CART_QUERY = f"""update users
+    set current_cart_id = (select max(cart_id) from cart where cart.users_id = users.users_id)
+    where users_email = {users_email}
+    """
+
+    cursor.execute(MOST_RECENT_CART_QUERY)
+
+# ======================= User & Account Functions ==========================
+
+def hash_password(password):
+    salt = bcrypt.gensalt()#generates a salt
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)# Hashs the password with the salt after converting it into binary
+    return hashed_password #returns the now hased password
+
+def create_user(input_name,input_email,input_password):
+    input_password = hash_password(input_password) #hash our example password
+    users_data = (input_name,input_email,input_password)
+    #list of sql queries to commit new user info to db
+    q1 = f"""insert into users (users_name,users_email,users_password) values ({input_name},{input_email},{input_password});
+            select users_id from users where users_email = {input_email};"""
+    q2 = f"""insert into cart (users_id) values (%s);
+            update users set current_cart_id = (select max(cart_id) from cart where cart.users_id = users.users_id) where users_id = %s;"""
+    try:
+        cursor.execute("start transaction;")
+        cursor.execute(q1)
+    except:
+        print("Account creation failed: EMAIL IN USE . Please login")
+
+    result = cursor.fetchall() #should always return only 1 row
+    for row in result:
+        current_users_id = row[0] #user id to store in session (will be returned by function if we want to automatically log someone in to the account they created.)
+    cursor.execute(q2)
+    mydb.commit()
+
+    return current_users_id
+
+def check_password(password, hashed_password):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password)#turns the password into binary and then compares it with the hashed password
+
+def u_login(email,password, hashed_password):
+    EMAIL_QUERY = f"select users_email from users where users_email = {email} ;"
+
+    try:
+        cursor.execute(EMAIL_QUERY)
+    except:
+        return jsonify(ERROR_EMAIL_NOTFOUND)

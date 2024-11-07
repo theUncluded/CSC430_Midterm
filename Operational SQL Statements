@@ -22,11 +22,11 @@ USERS SECTION
 
 
 -- User Registration.
-
+-- email is unique!
 -- step 1 creates the user
 	   insert into users (users_name,users_email,users_password) -- (location and card information comes later on (or we can make it be done on account creation for simplicity sake)) 
 	   values ("steve","steve.com","steveword");  -- example data. ordering of data matches the order in the above statement
- 
+
 -- step 2 creates a new cart for an existing user
 	   insert into cart (users_id) -- insert a cart for the new user
 	   select users_id from users where users_email = "steve.com"; -- find the new users user id, using the users email (which should be a unique entry that is indexd taking only 1 step.) 
