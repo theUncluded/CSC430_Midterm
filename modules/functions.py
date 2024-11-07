@@ -1,10 +1,17 @@
 import mysql.connector
 import bcrypt
+import json
+import decimal
 
 from flask import jsonify
 
-# =======================GLOBAL VARS=======================
+# =======================GLOBAL VARS & FXs=======================
 ERROR_EMAIL_NOTFOUND = f"EMAIL %s NOT FOUND IN OUR SYSTEM. PLEASE REGISTER OR USE A DIFFERENT EMAIL"
+
+#serialize instance for decimals as they cannot be serialized in/with JSON
+def dec_serializer(o):
+    if isinstance(o, decimal.Decimal):
+        return float(o)
 
 
 # =======================SQL ACTIONS=======================
@@ -19,23 +26,25 @@ def conn_2_db():
     return mydb
 #outter vars meant for future functions
 mydb = conn_2_db()
-cursor = mydb.cursor()
+cursor = mydb.cursor(buffered=True)
 
 #call to close connection to db
 def close_conn_2_db():
     cursor.close()
     mydb.close() 
 
-def pull_product_list():
-    QUERY = "select * from product"
-    cursor.execute(QUERY)
-    result = cursor.fetchall()
-    
-    for x in result:
-        print(result) #debug , comment when finished
-        
-    return jsonify(result)
-
+def pull_products():
+    try:
+        QUERY = "SELECT * FROM product;"
+        cursor.execute(QUERY)
+        row_headers = [x[0] for x in cursor.description]
+        result = cursor.fetchall()
+        json_data = [dict(zip(row_headers, r)) for r in result]
+        print(json_data)  # Log the JSON data to verify its structure
+        return jsonify(json_data), 200
+    except Exception as e:
+        print(f"Error in pull_products: {e}")
+        return jsonify({"error": "Failed to fetch products"}), 500
 
     
 # ======================= Cart Functions ==========================
@@ -68,6 +77,19 @@ def hash_password(password):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)# Hashs the password with the salt after converting it into binary
     return hashed_password #returns the now hased password
 
+# Function to create a cart and update current cart given a users id.
+def create_cart_for_user(users_id):
+    q3 = "INSERT INTO cart (users_id) VALUES (%s);"
+    q4 = """
+        UPDATE users 
+        SET current_cart_id = (SELECT MAX(cart_id) FROM cart WHERE cart.users_id = users.users_id)
+        WHERE users_id = %s;
+    """
+    cursor.execute(q3,(users_id,))
+    cursor.execute(q4,(users_id,))
+    # DO NOT PUT A COMIT IN FUNCTION. We only create a new cart for a user, when a new user is created, or if the users previous cart has been used for a sale.
+    # The comit will occur within those functions!
+
 def create_user(input_name, input_email, input_password):
     # Hash the password
     input_password = hash_password(input_password)
@@ -80,16 +102,6 @@ def create_user(input_name, input_email, input_password):
     
     select_user_id_query = """
         SELECT users_id FROM users WHERE users_email = %s;
-    """
-    
-    create_cart_query = """
-        INSERT INTO cart (users_id) VALUES (%s);
-    """
-    
-    update_current_cart_query = """
-        UPDATE users 
-        SET current_cart_id = (SELECT MAX(cart_id) FROM cart WHERE cart.users_id = users.users_id)
-        WHERE users_id = %s;
     """
 
     try:
@@ -109,10 +121,7 @@ def create_user(input_name, input_email, input_password):
         current_users_id = result[0]
         
         # Create a cart for the new user
-        cursor.execute(create_cart_query, (current_users_id,))
-        
-        # Update the user's current cart ID
-        cursor.execute(update_current_cart_query, (current_users_id,))
+        create_cart_for_user(current_users_id)
         
         # Commit the transaction
         mydb.commit()
@@ -125,6 +134,7 @@ def create_user(input_name, input_email, input_password):
         return None
 
 
+
 def check_password(password, hashed_password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password)#turns the password into binary and then compares it with the hashed password
 
@@ -135,6 +145,8 @@ def u_login(email,password, hashed_password):
         cursor.execute(EMAIL_QUERY)
     except:
         return jsonify(ERROR_EMAIL_NOTFOUND)
+    
+
     
 # ======================= Admin Functionalities ==========================
 
@@ -149,20 +161,24 @@ def add_x_to_product_stock(x,product_id):
     
     updated_stock = curr_stock + x
     QUERY = f'''
-select * from product where product_id = {product_id};
-update product 
-set stock = {updated_stock}
-where product_id = {product_id}
-'''
+    update product 
+    set stock = {updated_stock}
+    where product_id = {product_id}
+    '''
     try:
         cursor.execute(QUERY)
     except:
         print("Addition statement failed! Reference database if issue persists")
 
     return updated_stock
-# ======================= Sale Functionalities ==========================
 
 #removes a n amount of stock from a product
 def remove_x_from_product_stock():
     return 0
+
+def add_new_product():
+    return 0
+# ======================= Sale Functionalities ==========================
+
+
 

@@ -1,13 +1,16 @@
 from flask import Flask, render_template, request, jsonify, redirect
+from flask_cors import CORS
 from modules import functions
 import pytest
+import requests
 
 app = Flask(__name__)  
+CORS(app)
 #Configuration of application, errors with config file lead to hard coding config in app
 #Fix soon
 #e_string = model.ENGINE_STRING
 #print(e_string)
-#app.config["SQLALCHEMY_DATABASE_URI"] = e_string
+app.config["MYSQL_CURSORCLASS"] = 'DictCursor'
 
 # =======================LOGIN MANAGER INIT=======================
 #lm = LoginManager()
@@ -15,9 +18,11 @@ app = Flask(__name__)
 #lm.login_view = 'login'
 
 # ===Main & Admin Pages===
-@app.route('/') 
+@app.route('/', methods=['GET'])
 def index():
-	return render_template('index.html')
+    products_data = functions.pull_products()
+    print("Products data being returned:", products_data)  # Log the output
+    return products_data
 
 #pull product list uses functions library found in app dir to return a json of the product list in full - enacted on index load
 def index2():
