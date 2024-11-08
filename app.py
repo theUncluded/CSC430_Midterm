@@ -6,8 +6,7 @@ import pytest
 import requests
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
+CORS(app)
 
 # Configure MySQL connection
 app.config["MYSQL_HOST"] = "localhost"  # Replace with your MySQL host
@@ -28,13 +27,36 @@ def admin_panel():
     return render_template('admin_panel.html')
 
 # === User Login Pages & Methods ===
-@app.route('/login/', methods=['GET', 'POST'])
+@app.route('/login/', methods=['POST'])
 def login():
-    return render_template('login.html')
+    data = request.json
+    return functions.authenticate_user(data)  # Delegate to authenticate_user
 
 @app.route('/logout/')
 def logout():
     return redirect('/')
+
+# == Cart Routes ==
+
+@app.route('/cart/save', methods=['POST'])
+def save_cart():
+    data = request.json
+    user_id = data.get("user_id")
+    cart_items = data.get("cart_items", [])
+
+    if not user_id or not isinstance(cart_items, list):
+        return jsonify({"success": False, "message": "Invalid data format"}), 400
+
+    # Save cart items for the user
+    return functions.save_cart(user_id, cart_items)
+
+# === Get Cart Route ===
+@app.route('/cart/<int:user_id>', methods=['GET'])
+def get_cart(user_id):
+    # Retrieve cart items for the user
+    return functions.get_cart(user_id)
+
+
 
 # ======================= DEBUG ==========================
 if __name__ == '__main__':

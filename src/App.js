@@ -7,24 +7,30 @@ import AdminPage from './AdminPage';
 import Checkout from './Checkout';
 import { ProductProvider } from './ProductContext';
 import { CartProvider } from './CartContext'; // Import CartProvider
+import { UserProvider } from './UserContext'; // Import UserProvider
+
 import './App.css';
 
 function App() {
     return (
         <ProductProvider>
-            <CartProvider> {/* Wrap with CartProvider to share cart state globally */}
-                <Router>
-                    <div className="App">
-                        <Header />
-                        <Routes>
-                            <Route path="/" element={<ProductGrid />} /> {/* Home page as ProductGrid */}
-                            <Route path="/products" element={<ProductList />} />
-                            <Route path="/admin" element={<AdminPage />} />
-                            <Route path="/checkout" element={<Checkout />} />
-                        </Routes>
-                    </div>
-                </Router>
-            </CartProvider>
+                            <UserProvider> {/* Wrap with UserProvider */}
+            <CartProvider>
+
+                    <Router>
+                        <div className="App">
+                            <Header />
+                            <Routes>
+                                <Route path="/" element={<ProductGrid />} />
+                                <Route path="/products" element={<ProductList />} />
+                                <Route path="/admin" element={<AdminPage />} />
+                                <Route path="/checkout" element={<Checkout />} />
+                            </Routes>
+                        </div>
+                    </Router>
+                    </CartProvider>
+                </UserProvider>
+
         </ProductProvider>
     );
 }
