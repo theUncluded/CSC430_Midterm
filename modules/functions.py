@@ -4,6 +4,9 @@ import json
 import decimal
 
 from flask import jsonify
+from MySQLdb.cursors import DictCursor
+
+from flask import jsonify
 
 # =======================GLOBAL VARS & FXs=======================
 ERROR_EMAIL_NOTFOUND = f"EMAIL %s NOT FOUND IN OUR SYSTEM. PLEASE REGISTER OR USE A DIFFERENT EMAIL"
@@ -19,9 +22,9 @@ def dec_serializer(o):
 def conn_2_db():
     mydb = mysql.connector.connect(#could potentially make this configurable
         host = "localhost",
-        user = "root",
-        password = "1234",
-        database = "csc430"
+        user = "dashi",
+        password = "password",
+        database = "csi"
     )
     return mydb
 #outter vars meant for future functions
@@ -33,20 +36,27 @@ def close_conn_2_db():
     cursor.close()
     mydb.close() 
 
-def pull_products():
+def pull_products(mysql):
     try:
+        # Initialize a cursor with DictCursor to get rows as dictionaries
+        cursor = mysql.connection.cursor(DictCursor)
+        
+        # Execute the query
         QUERY = "SELECT * FROM product;"
         cursor.execute(QUERY)
-        row_headers = [x[0] for x in cursor.description]
+        
+        # Fetch all rows as dictionaries
         result = cursor.fetchall()
-        json_data = [dict(zip(row_headers, r)) for r in result]
-        print(json_data)  # Log the JSON data to verify its structure
-        return jsonify(json_data), 200
+        
+        cursor.close()  # Close the cursor after fetching data
+        
+        # Log and return JSON-formatted data
+        print("Products data being returned:", result)
+        return jsonify(result), 200
     except Exception as e:
         print(f"Error in pull_products: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
 
-    
 # ======================= Cart Functions ==========================
 #assign user to cart table, try NOT to thread this with other existing carts
 def assign_to_cart(users_id):
