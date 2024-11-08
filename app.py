@@ -30,7 +30,7 @@ def admin_panel():
 @app.route('/login/', methods=['POST'])
 def login():
     data = request.json
-    return functions.authenticate_user(data)  # Delegate to authenticate_user
+    return functions.authenticate_user(data)
 
 @app.route('/logout/')
 def logout():
@@ -43,17 +43,13 @@ def save_cart():
     data = request.json
     user_id = data.get("user_id")
     cart_items = data.get("cart_items", [])
-
     if not user_id or not isinstance(cart_items, list):
         return jsonify({"success": False, "message": "Invalid data format"}), 400
-
-    # Save cart items for the user
     return functions.save_cart(user_id, cart_items)
 
 # === Get Cart Route ===
 @app.route('/cart/<int:user_id>', methods=['GET'])
 def get_cart(user_id):
-    # Retrieve cart items for the user
     return functions.get_cart(user_id)
 
 

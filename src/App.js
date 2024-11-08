@@ -14,9 +14,8 @@ import './App.css';
 function App() {
     return (
         <ProductProvider>
-                            <UserProvider> {/* Wrap with UserProvider */}
-            <CartProvider>
-
+            <UserProvider> {/* Wrap with UserProvider */}
+                <CartProvider>
                     <Router>
                         <div className="App">
                             <Header />
@@ -28,8 +27,8 @@ function App() {
                             </Routes>
                         </div>
                     </Router>
-                    </CartProvider>
-                </UserProvider>
+                </CartProvider>
+            </UserProvider>
 
         </ProductProvider>
     );

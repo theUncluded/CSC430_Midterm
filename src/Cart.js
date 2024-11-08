@@ -6,9 +6,11 @@ const Cart = ({ onClose }) => {
     const { cartItems, updateItemQuantity, removeFromCart } = useCart();
     const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-    const handleQuantityChange = (itemId, quantity) => {
-        updateItemQuantity(itemId, Number(quantity));
+    const handleQuantityChange = (productId, quantity) => {
+        console.log(`Changing quantity for product ID ${productId} to ${quantity}`);
+        updateItemQuantity(productId, Number(quantity));
     };
+
 
     return (
         <div className="cart-sidebar open">
@@ -21,7 +23,7 @@ const Cart = ({ onClose }) => {
                     <p>No items in your cart</p>
                 ) : (
                     cartItems.map((item) => (
-                        <div key={item.id} className="cart-item">
+                        <div key={item.product_id} className="cart-item">
                             <img src={`/Images/p${item.product_id}.jpg`} alt={item.title} className="cart-item-image" onError={(e) => e.target.src = '/images/default.jpg'}/>
                             <div className="cart-item-details">
                                 <p className="cart-item-title" title={item.title}>{item.title}</p>
@@ -33,11 +35,11 @@ const Cart = ({ onClose }) => {
                                         Quantity:
                                         <select
                                             value={item.quantity}
-                                            onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                                            onChange={(e) => handleQuantityChange(item.product_id, e.target.value)}
                                             className="quantity-dropdown"
                                         >
                                             {[...Array(10)].map((_, i) => (
-                                                <option key={i + 1} value={i + 1}>
+                                                <option key={i} value={i + 1}>
                                                     {i + 1}
                                                 </option>
                                             ))}

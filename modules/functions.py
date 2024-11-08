@@ -61,12 +61,12 @@ def pull_products(mysql):
 #assign user to cart table, try NOT to thread this with other existing carts
 def assign_to_cart(users_id):
     try:
-        # Check if a cart already exists for the user
+        # Check if user has a cart
         select_query = "SELECT cart_id FROM cart WHERE users_id = %s LIMIT 1"
         cursor.execute(select_query, (users_id,))
         cart_id = cursor.fetchone()
         
-        # If a cart exists, return the cart ID
+        # If a cart exists, return the cart id
         if cart_id:
             return cart_id[0]
         
@@ -99,7 +99,7 @@ def save_cart(user_id, cart_items):
             print("Failed to assign or retrieve cart ID.")
             return jsonify({"success": False, "message": "Failed to assign cart"}), 500
 
-        # Clear any existing items for this cart in product_pair
+        # delete old items
         delete_query = "DELETE FROM product_pair WHERE cart_id = %s"
         cursor.execute(delete_query, (cart_id,))
         print(f"Cleared existing items in product_pair for cart_id: {cart_id}")
@@ -125,8 +125,6 @@ def save_cart(user_id, cart_items):
         print(f"Error in save_cart function: {e}")
         return jsonify({"success": False, "message": "Failed to save cart"}), 500
 
-
-# Retrieve cart items for a user
 def get_cart(user_id):
     try:
         # Get the user's cart ID
@@ -134,15 +132,13 @@ def get_cart(user_id):
         if not cart_id:
             return jsonify([]), 200  # If no cart, return an empty list
 
-        # Retrieve items from the product_pair table
+        #get all items that are associated with teh cart
         select_query = """
             SELECT product_id, product_amount 
             FROM product_pair 
             WHERE cart_id = %s
         """
         cursor.execute(select_query, (cart_id,))
-        
-        # Fetch items and structure them as a list of dictionaries
         result = cursor.fetchall()
         cart_items = [{"product_id": row[0], "quantity": row[1]} for row in result]
         
@@ -223,15 +219,12 @@ def u_login(email, password):
     EMAIL_QUERY = "SELECT users_id, users_name, users_password FROM users WHERE users_email = %s;"
 
     try:
-        # Execute the query to fetch user details
+        # fetch details
         cursor.execute(EMAIL_QUERY, (email,))
         result = cursor.fetchone()
-
         if result:
-         
             users_id, users_name, stored_hashed_password = result
-
-            if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):  # Ensure both are byte strings
+            if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
                 return jsonify({
                     "success": True,
                     "message": "Login successful!",
@@ -259,7 +252,7 @@ def authenticate_user(data):
 
     if is_registering:
         # Register new user
-        name = data.get('name', 'New User')  # Default to "New User" if no name provided
+        name = data.get('name', 'New User')
         user_id = create_user(name, email, password)
         if user_id:
             return jsonify({"success": True, "message": "Registration successful!", "user_id": user_id})

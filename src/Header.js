@@ -1,36 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Cart from './Cart';
+import Login from './Login';
 import { useCart } from './CartContext';
+import { UserContext } from './UserContext';
 import './Header.css';
 
 const Header = () => {
-    const { cartItems } = useCart();
+    const { cartItems,fetchCartFromDB } = useCart();
     const [cartOpen, setCartOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [products, setProducts] = useState([]);
+    const [isLoginModalOpen, setLoginModalOpen] = useState(false);
 
+    const { isLoggedIn, userName, handleLogin, handleLogout } = useContext(UserContext);
+
+    const toggleLoginModal = () => {
+        setLoginModalOpen(prev => !prev);
+    };
 
     useEffect(() => {
         const fetchProducts = async () => {
-          try {
-            const response = await fetch('http://127.0.0.1:8080/');
-            if (!response.ok) {
-              throw new Error(`Network response was not ok: ${response.statusText}`);
+            try {
+                const response = await fetch('http://127.0.0.1:8080/');
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
+                const data = await response.json();
+                console.log("Fetched products:", data);
+                setProducts(data);
+            } catch (error) {
+                console.error("Error fetching products:", error);
             }
-            const data = await response.json();
-            console.log("Fetched products:", data);  // Log the fetched data
-            setProducts(data);
-          } catch (error) {
-            console.error("Error fetching products:", error);
-          }
         };
-    
+
         fetchProducts();
-      }, []);
+    }, []);
 
     const toggleCart = () => {
         setCartOpen((prevCartOpen) => !prevCartOpen);
+    };
+
+    const handleLoginSuccess = (userId, name) => {
+        handleLogin(userId, name);  // Update context with login data
+        setLoginModalOpen(false);
+        fetchCartFromDB();  // Load the user's cart upon login
     };
 
     const handleSearchChange = (e) => {
@@ -38,7 +52,6 @@ const Header = () => {
         setSearchTerm(term);
 
         if (term) {
-
             setSuggestions(products.filter(product =>
                 product.product_name.toLowerCase().includes(term.toLowerCase())
             ));
@@ -48,7 +61,6 @@ const Header = () => {
     };
 
     const handleSearchSubmit = () => {
-
         window.location.href = `/products?search=${encodeURIComponent(searchTerm)}`;
     };
 
@@ -78,7 +90,7 @@ const Header = () => {
                     placeholder="Search for Products"
                     value={searchTerm}
                     onChange={handleSearchChange}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyPress}
                 />
                 {suggestions.length > 0 && (
                     <div className="autocomplete-container">
@@ -95,6 +107,30 @@ const Header = () => {
                 )}
             </div>
 
+            {/* Auth container with conditional rendering for login/logout */}
+            <div className="auth-container">
+                {isLoggedIn ? (
+                    <div className="user-menu">
+                        <button className="user-button">{userName}</button>
+                        <div className="user-menu-content">
+                            <button className="logout-button" onClick={handleLogout}>Logout</button>
+                        </div>
+                    </div>
+                ) : (
+                    <button onClick={toggleLoginModal} className="login-button">
+                        Login
+                    </button>
+                )}
+            </div>
+
+            {/* Login modal */}
+            <Login 
+                isOpen={isLoginModalOpen} 
+                onClose={toggleLoginModal} 
+                onLoginSuccess={handleLoginSuccess}  
+            />
+
+            {/* Cart icon */}
             <div className="cart-icon" onClick={toggleCart}>
                 Cart ({cartItems.reduce((count, item) => count + item.quantity, 0)})
             </div>
