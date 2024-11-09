@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Cart from './Cart';
 import Login from './Login';
-import { useCart } from './CartContext';
+import { useCart } from './CartContext';  // Import useCart here
 import { UserContext } from './UserContext';
 import './Header.css';
 
 const Header = () => {
-    const { cartItems,fetchCartFromDB } = useCart();
+    const { cartItems, fetchCartFromDB } = useCart(); // Access fetchCartFromDB from CartContext
     const [cartOpen, setCartOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [products, setProducts] = useState([]);
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-
-    const { isLoggedIn, userName, handleLogin, handleLogout } = useContext(UserContext);
+    const { handleLogin, isLoggedIn, userName } = useContext(UserContext);
 
     const toggleLoginModal = () => {
         setLoginModalOpen(prev => !prev);
@@ -42,9 +41,13 @@ const Header = () => {
     };
 
     const handleLoginSuccess = (userId, name) => {
-        handleLogin(userId, name);  // Update context with login data
+        handleLogin(userId);  // Update the user context upon successful login
+        fetchCartFromDB();    // Fetch the cart from DB
         setLoginModalOpen(false);
-        fetchCartFromDB();  // Load the user's cart upon login
+    };
+
+    const handleLogout = () => {
+        handleLogin(null, '');
     };
 
     const handleSearchChange = (e) => {
