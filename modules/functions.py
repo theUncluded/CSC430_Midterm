@@ -4,6 +4,9 @@ import json
 import decimal
 
 from flask import jsonify
+from MySQLdb.cursors import DictCursor
+
+from flask import jsonify
 
 # =======================GLOBAL VARS & FXs=======================
 ERROR_EMAIL_NOTFOUND = f"EMAIL %s NOT FOUND IN OUR SYSTEM. PLEASE REGISTER OR USE A DIFFERENT EMAIL"
@@ -19,9 +22,9 @@ def dec_serializer(o):
 def conn_2_db():
     mydb = mysql.connector.connect(#could potentially make this configurable
         host = "localhost",
-        user = "root",
-        password = "1234",
-        database = "csc430"
+        user = "dashi",
+        password = "password",
+        database = "csi"
     )
     return mydb
 #outter vars meant for future functions
@@ -33,32 +36,49 @@ def close_conn_2_db():
     cursor.close()
     mydb.close() 
 
-def pull_products():
+def pull_products(mysql):
     try:
+        # Initialize a cursor with DictCursor to get rows as dictionaries
+        cursor = mysql.connection.cursor(DictCursor)
+        
+        # Execute the query
         QUERY = "SELECT * FROM product;"
         cursor.execute(QUERY)
-        row_headers = [x[0] for x in cursor.description]
+        
+        # Fetch all rows as dictionaries
         result = cursor.fetchall()
-        json_data = [dict(zip(row_headers, r)) for r in result]
-        print(json_data)  # Log the JSON data to verify its structure
-        return jsonify(json_data), 200
+        
+        cursor.close()  # Close the cursor after fetching data
+        
+        # Log and return JSON-formatted data
+        print("Products data being returned:", result)
+        return jsonify(result), 200
     except Exception as e:
         print(f"Error in pull_products: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
 
-    
 # ======================= Cart Functions ==========================
 #assign user to cart table, try NOT to thread this with other existing carts
 def assign_to_cart(users_id):
-    
-    QUERY = f"insert into cart ({users_id})"
-    SEL_QUERY = f"select users_email from users where users_id = {users_id}" #match user email to passed id
-    
-    users_email = cursor.execute(SEL_QUERY)
+    try:
+        # Check if user has a cart
+        select_query = "SELECT cart_id FROM cart WHERE users_id = %s LIMIT 1"
+        cursor.execute(select_query, (users_id,))
+        cart_id = cursor.fetchone()
+        
+        # If a cart exists, return the cart id
+        if cart_id:
+            return cart_id[0]
+        
+        # If no cart exists, create a new one for the user
+        insert_query = "INSERT INTO cart (users_id) VALUES (%s)"
+        cursor.execute(insert_query, (users_id,))
+        mydb.commit()
+        return cursor.lastrowid  # Return the newly created cart ID
 
-    cursor.execute(QUERY)#insert user_id of passed u_id into cart table
-
-    mydb.commit()
+    except Exception as e:
+        print(f"Error in assign_to_cart: {e}")
+        return None
 
 #updates the current cart to be the most recently created cart
 def current_cart_db_update(users_email):
@@ -69,7 +89,65 @@ def current_cart_db_update(users_email):
     """
 
     cursor.execute(MOST_RECENT_CART_QUERY)
+def save_cart(user_id, cart_items):
+    try:
+        print(f"Received user_id: {user_id}, cart_items: {cart_items}")
+        
+        # Get or create the user's cart ID
+        cart_id = assign_to_cart(user_id)
+        if not cart_id:
+            print("Failed to assign or retrieve cart ID.")
+            return jsonify({"success": False, "message": "Failed to assign cart"}), 500
 
+        # delete old items
+        delete_query = "DELETE FROM product_pair WHERE cart_id = %s"
+        cursor.execute(delete_query, (cart_id,))
+        print(f"Cleared existing items in product_pair for cart_id: {cart_id}")
+
+        # Insert updated items into product_pair
+        insert_query = "INSERT INTO product_pair (cart_id, product_id, product_amount) VALUES (%s, %s, %s)"
+        for item in cart_items:
+            product_id = item.get("product_id")
+            quantity = item.get("quantity")
+            print(f"Attempting to insert product_id: {product_id}, quantity: {quantity}")
+            
+            if not product_id or not quantity:
+                print("Invalid item data detected in cart_items:", item)
+                continue
+            
+            cursor.execute(insert_query, (cart_id, product_id, quantity))
+
+        mydb.commit()
+        print("Cart saved successfully.")
+        return jsonify({"success": True, "message": "Cart saved successfully"}), 200
+
+    except Exception as e:
+        print(f"Error in save_cart function: {e}")
+        return jsonify({"success": False, "message": "Failed to save cart"}), 500
+
+def get_cart(user_id):
+    try:
+        # Get the user's cart ID
+        cart_id = assign_to_cart(user_id)
+        if not cart_id:
+            return jsonify([]), 200  # If no cart, return an empty list
+
+        #get all items that are associated with teh cart
+        select_query = """
+            SELECT product_id, product_amount 
+            FROM product_pair 
+            WHERE cart_id = %s
+        """
+        cursor.execute(select_query, (cart_id,))
+        result = cursor.fetchall()
+        cart_items = [{"product_id": row[0], "quantity": row[1]} for row in result]
+        
+        return jsonify(cart_items), 200
+    except Exception as e:
+        print(f"Error retrieving cart: {e}")
+        return jsonify({"success": False, "message": "Failed to retrieve cart"}), 500
+    
+    
 # ======================= User & Account Functions ==========================
 
 def hash_password(password):
@@ -92,7 +170,7 @@ def create_cart_for_user(users_id):
 
 def create_user(input_name, input_email, input_password):
     # Hash the password
-    input_password = hash_password(input_password)
+    input_password = hash_password(input_password).decode('utf-8')  # Decode to store as string
 
     # SQL Queries
     insert_user_query = """
@@ -129,7 +207,6 @@ def create_user(input_name, input_email, input_password):
         return current_users_id  # Optionally use this for automatic login
         
     except Exception as e:
-        #mydb.rollback()
         print(f"Error: {e}")
         return None
 
@@ -138,14 +215,52 @@ def create_user(input_name, input_email, input_password):
 def check_password(password, hashed_password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password)#turns the password into binary and then compares it with the hashed password
 
-def u_login(email,password, hashed_password):
-    EMAIL_QUERY = f"select users_email from users where users_email = {email} ;"
+def u_login(email, password):
+    EMAIL_QUERY = "SELECT users_id, users_name, users_password FROM users WHERE users_email = %s;"
 
     try:
-        cursor.execute(EMAIL_QUERY)
-    except:
-        return jsonify(ERROR_EMAIL_NOTFOUND)
-    
+        # fetch details
+        cursor.execute(EMAIL_QUERY, (email,))
+        result = cursor.fetchone()
+        if result:
+            users_id, users_name, stored_hashed_password = result
+            if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
+                return jsonify({
+                    "success": True,
+                    "message": "Login successful!",
+                    "user_id": users_id,
+                    "user_name": users_name  
+                })
+            else:
+
+                return jsonify({"success": False, "message": "Invalid password."})
+        else:
+
+            return jsonify({"success": False, "message": ERROR_EMAIL_NOTFOUND % email})
+
+    except Exception as e:
+
+        print(f"Error in u_login: {e}")
+        return jsonify({"success": False, "message": "An error occurred during login."})
+
+#login and register
+
+def authenticate_user(data):
+    email = data.get('email')
+    password = data.get('password')
+    is_registering = data.get('isRegistering', False)  # register flag
+
+    if is_registering:
+        # Register new user
+        name = data.get('name', 'New User')
+        user_id = create_user(name, email, password)
+        if user_id:
+            return jsonify({"success": True, "message": "Registration successful!", "user_id": user_id})
+        else:
+            return jsonify({"success": False, "message": "Registration failed, email might be in use."})
+    else:
+        # Log in existing user
+        return u_login(email, password)
 
     
 # ======================= Admin Functionalities ==========================
