@@ -52,7 +52,15 @@ def save_cart():
 def get_cart(user_id):
     return functions.get_cart(user_id)
 
+@app.route('/checkout', methods=['POST'])
+def checkout_route():
+    data = request.json
+    user_id = data.get('user_id')
+    cart_items = data.get('cart_items')
 
+    # Call checkout function from functions.py
+    response = functions.checkout(user_id, cart_items)
+    return response
 
 # ======================= DEBUG ==========================
 if __name__ == '__main__':
