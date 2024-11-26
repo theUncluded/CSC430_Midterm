@@ -173,12 +173,35 @@ def add_x_to_product_stock(x,product_id):
     return updated_stock
 
 #removes a n amount of stock from a product
-def remove_x_from_product_stock():
-    return 0
+def remove_x_from_product_stock(x , product_id):
+    GET_CURR_STOCK_QUERY = f'select stock from product where product_id = {product_id};'
+    try:
+        cursor.execute(GET_CURR_STOCK_QUERY)
+        curr_stock = cursor.fetchone()[0]
+    except:
+        print("Failed to update value, please double check passed product_id")
 
-def add_new_product():
-    return 0
-# ======================= Sale Functionalities ==========================
+    new_stock = curr_stock - x
+    QUERY = f'''
+    update product 
+    set stock = {new_stock}
+    where product_id = {product_id}
+    '''
+    try:
+        cursor.execute(QUERY)
+    except Exception as e:
+        print(e)
 
 
+def add_new_product(p_name , p_price , p_stock):
+    INS_INTO_QUERY = f'''
+    INSERT INTO product (product_name , price , stock)
+    VALUES ({p_name} , {p_price} , {p_stock})
+    '''
+
+    try:
+        cursor.execute(INS_INTO_QUERY)
+        print("Product insertion successful")
+    except Exception as e:
+        print(e)
 
