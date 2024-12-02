@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Cart from './Cart';
 import Login from './Login';
-import { useCart } from './CartContext';  // Import useCart here
+import { useCart } from './CartContext';
 import { UserContext } from './UserContext';
 import './Header.css';
 
 const Header = () => {
-    const { cartItems, fetchCartFromDB } = useCart(); // Access fetchCartFromDB from CartContext
+    const { cartItems, fetchCartFromDB } = useCart();
     const [cartOpen, setCartOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [products, setProducts] = useState([]);
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-    const { handleLogin, isLoggedIn, userName } = useContext(UserContext);
+    const { handleLogin, handleLogout, isLoggedIn, userName } = useContext(UserContext);
 
     const toggleLoginModal = () => {
         setLoginModalOpen(prev => !prev);
@@ -26,7 +26,6 @@ const Header = () => {
                     throw new Error(`Network response was not ok: ${response.statusText}`);
                 }
                 const data = await response.json();
-                console.log("Fetched products:", data);
                 setProducts(data);
             } catch (error) {
                 console.error("Error fetching products:", error);
@@ -41,13 +40,9 @@ const Header = () => {
     };
 
     const handleLoginSuccess = (userId, name) => {
-        handleLogin(userId);  // Update the user context upon successful login
-        fetchCartFromDB();    // Fetch the cart from DB
+        handleLogin(userId, name);  // Update user context upon successful login
+        fetchCartFromDB(userId);    // Fetch cart from DB using userId
         setLoginModalOpen(false);
-    };
-
-    const handleLogout = () => {
-        handleLogin(null, '');
     };
 
     const handleSearchChange = (e) => {
@@ -86,7 +81,6 @@ const Header = () => {
                 <a href="/products">Products</a>
             </nav>
 
-            {/* Search bar */}
             <div className="search-bar-container">
                 <input
                     type="text"
@@ -110,7 +104,6 @@ const Header = () => {
                 )}
             </div>
 
-            {/* Auth container with conditional rendering for login/logout */}
             <div className="auth-container">
                 {isLoggedIn ? (
                     <div className="user-menu">
@@ -126,14 +119,12 @@ const Header = () => {
                 )}
             </div>
 
-            {/* Login modal */}
             <Login 
                 isOpen={isLoginModalOpen} 
                 onClose={toggleLoginModal} 
                 onLoginSuccess={handleLoginSuccess}  
             />
 
-            {/* Cart icon */}
             <div className="cart-icon" onClick={toggleCart}>
                 Cart ({cartItems.reduce((count, item) => count + item.quantity, 0)})
             </div>

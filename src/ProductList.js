@@ -14,20 +14,17 @@ const ProductList = () => {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // Extract search term from the URL query parameters
     const searchTerm = searchParams.get("search") || "";
 
     useEffect(() => {
         let filtered = products;
 
         if (searchTerm) {
-            // Filter products based on search term
             filtered = filtered.filter(product =>
                 product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
-        // Filter products within the specified price range
         const minPriceNum = minPrice === '' ? 0 : parseFloat(minPrice);
         const maxPriceNum = maxPrice === '' ? Infinity : parseFloat(maxPrice);
         filtered = filtered.filter(product => product.price >= minPriceNum && product.price <= maxPriceNum);
@@ -36,7 +33,7 @@ const ProductList = () => {
             filtered = filtered.filter(product =>
                 selectedRatings.some(range => {
                     const [min, max] = range.split('-').map(Number);
-                    return product.rating.rate >= min && product.rating.rate < max;
+                    return product.rating >= min && product.rating <= max;
                 })
             );
         }
@@ -58,37 +55,23 @@ const ProductList = () => {
     ];
     const uniqueCategories = [...new Set(products.map(p => p.category))];
 
-    const handleMinPriceChange = (e) => {
-        setMinPrice(e.target.value);
+    const handleMinPriceChange = (e) => setMinPrice(e.target.value);
+    const handleMaxPriceChange = (e) => setMaxPrice(e.target.value);
+
+    const handleRatingChange = (range) => {
+        setSelectedRatings(prev =>
+            prev.includes(range) ? prev.filter(r => r !== range) : [...prev, range]
+        );
     };
 
-    const handleMaxPriceChange = (e) => {
-        setMaxPrice(e.target.value);
-    };
+    const handleClearSearch = () => setSearchParams({});
 
-    const handleClearSearch = () => {
-        setSearchParams({}); // Clear all search parameters, including `search`
-    };
+    const sortByNew = () => setFilteredProducts(prev => [...prev].sort((a, b) => b.product_id - a.product_id));
+    const sortByPriceAscending = () => setFilteredProducts(prev => [...prev].sort((a, b) => a.price - b.price));
+    const sortByPriceDescending = () => setFilteredProducts(prev => [...prev].sort((a, b) => b.price - a.price));
+    const sortByRating = () => setFilteredProducts(prev => [...prev].sort((a, b) => b.rating - a.rating));
 
-    const sortByNew = () => {
-        setFilteredProducts(prev => [...prev].sort((a, b) => b.id - a.id));
-    };
-
-    const sortByPriceAscending = () => {
-        setFilteredProducts(prev => [...prev].sort((a, b) => a.price - b.price));
-    };
-
-    const sortByPriceDescending = () => {
-        setFilteredProducts(prev => [...prev].sort((a, b) => b.price - a.price));
-    };
-
-    const sortByRating = () => {
-        setFilteredProducts(prev => [...prev].sort((a, b) => b.rating.rate - a.rating.rate));
-    };
-
-    if (loading) {
-        return <p>Loading products...</p>;
-    }
+    if (loading) return <p>Loading products...</p>;
 
     return (
         <div className="product-list-container">
@@ -101,9 +84,7 @@ const ProductList = () => {
                         onChange={(e) => setSearchParams({ search: e.target.value })}
                     />
                     {searchTerm && (
-                        <button onClick={handleClearSearch} className="clear-search-btn">
-                            Clear
-                        </button>
+                        <button onClick={handleClearSearch} className="clear-search-btn">Clear</button>
                     )}
                 </div>
 
@@ -111,7 +92,7 @@ const ProductList = () => {
                     <h3>Price Range</h3>
                     <div className="price-inputs">
                         <label>
-                            Min Price: 
+                            Min Price:
                             <input
                                 type="number"
                                 value={minPrice}
@@ -121,7 +102,7 @@ const ProductList = () => {
                             />
                         </label>
                         <label>
-                            Max Price: 
+                            Max Price:
                             <input
                                 type="number"
                                 value={maxPrice}
@@ -140,9 +121,7 @@ const ProductList = () => {
                             <input
                                 type="checkbox"
                                 value={range}
-                                onChange={() => setSelectedRatings(prev =>
-                                    prev.includes(range) ? prev.filter(r => r !== range) : [...prev, range]
-                                )}
+                                onChange={() => handleRatingChange(range)}
                             />
                             {label}
                         </label>
@@ -177,7 +156,7 @@ const ProductList = () => {
                 <div className="products">
                     {filteredProducts.map(product => (
                         <div key={product.product_id} className="product-card">
-                            <img src={`/Images/p${product.product_id}.jpg`} alt={product.product_name}  onError={(e) => e.target.src = '/images/default.jpg'}/>
+                            <img src={`/Images/p${product.product_id}.jpg`} alt={product.product_name} onError={(e) => e.target.src = '/images/default.jpg'} />
                             <p className="product-rating">Rating: {product.rating}</p>
                             <div className="product-info">
                                 <p className="product-title" title={product.product_name}>{product.product_name}</p>

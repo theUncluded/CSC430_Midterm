@@ -147,7 +147,28 @@ def get_cart(user_id):
         print(f"Error retrieving cart: {e}")
         return jsonify({"success": False, "message": "Failed to retrieve cart"}), 500
     
-    
+def checkout(user_id, cart_items):
+    try:
+        cursor.execute("START TRANSACTION;")        
+        for item in cart_items:
+            product_id = item['product_id']
+            quantity = item['quantity']        
+            cursor.execute("SELECT stock FROM product WHERE product_id = %s;", (product_id,))
+            stock = cursor.fetchone()[0]        
+            if stock >= quantity:
+                new_stock = stock - quantity
+                cursor.execute("UPDATE product SET stock = %s WHERE product_id = %s;", (new_stock, product_id))
+            else:
+        
+                cursor.execute("ROLLBACK;")
+                return jsonify({"success": False, "message": f"Insufficient stock for product ID {product_id}."})
+        cursor.execute("COMMIT;")
+        return jsonify({"success": True, "message": "Checkout successful!"})
+
+    except Exception as e:
+        print(f"Checkout error: {e}")
+        cursor.execute("ROLLBACK;")  
+        return jsonify({"success": False, "message": "Checkout failed due to an error."})
 # ======================= User & Account Functions ==========================
 
 def hash_password(password):

@@ -6,15 +6,14 @@ import ProductGrid from './ProductGrid';
 import AdminPage from './AdminPage';
 import Checkout from './Checkout';
 import { ProductProvider } from './ProductContext';
-import { CartProvider } from './CartContext'; // Import CartProvider
-import { UserProvider } from './UserContext'; // Import UserProvider
-
+import { CartProvider } from './CartContext';
+import { UserProvider } from './UserContext';
 import './App.css';
 
 function App() {
     return (
         <ProductProvider>
-            <UserProvider> {/* Wrap with UserProvider */}
+            <UserProvider> {/* UserProvider wraps CartProvider */}
                 <CartProvider>
                     <Router>
                         <div className="App">
@@ -29,7 +28,6 @@ function App() {
                     </Router>
                 </CartProvider>
             </UserProvider>
-
         </ProductProvider>
     );
 }

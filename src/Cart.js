@@ -1,16 +1,16 @@
+// Cart.js
+
 import React from 'react';
 import { useCart } from './CartContext';
 import './Cart.css';
 
 const Cart = ({ onClose }) => {
-    const { cartItems, updateItemQuantity, removeFromCart } = useCart();
+    const { cartItems, updateItemQuantity, removeFromCart, checkout } = useCart();
     const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
     const handleQuantityChange = (productId, quantity) => {
-        console.log(`Changing quantity for product ID ${productId} to ${quantity}`);
         updateItemQuantity(productId, Number(quantity));
     };
-
 
     return (
         <div className="cart-sidebar open">
@@ -39,7 +39,7 @@ const Cart = ({ onClose }) => {
                                             className="quantity-dropdown"
                                         >
                                             {[...Array(10)].map((_, i) => (
-                                                <option key={i} value={i + 1}>
+                                                <option key={i + 1} value={i + 1}>
                                                     {i + 1}
                                                 </option>
                                             ))}
@@ -59,7 +59,7 @@ const Cart = ({ onClose }) => {
             </div>
             <div className="cart-footer">
                 <p className="subtotal">Subtotal: ${subtotal.toFixed(2)}</p>
-                <button className="checkout-btn">Checkout</button>
+                <button className="checkout-btn" onClick={checkout}>Checkout</button>
             </div>
         </div>
     );
