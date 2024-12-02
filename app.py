@@ -26,6 +26,43 @@ def index():
 def admin_panel():
     return render_template('admin_panel.html')
 
+def add_new_product():
+    data = request.json
+    p_name = data.get("new_p_name")
+    p_price = data.get("new_p_price")
+    p_stock = data.get("new_p_stock")
+    return functions.add_new_product(p_name , p_price , p_stock)
+
+def change_p_name():
+    data = request.json
+    p_id = data.get("product_id")
+    new_name = data.get("new_name")
+    return functions.product_name_change(p_id , new_name)
+
+def change_price():
+    data = request.json
+    p_id = data.get("product_id")
+    new_price = data.get("new_price")
+    return functions.price_manip(p_id , new_price)
+
+def remove_x_stock():
+    data = request.json
+    p_id = data.get("product_id")
+    new_stock = data.get("new_stock_less")
+    return functions.remove_x_from_product_stock(p_id , new_stock)
+
+def add_x_stock():
+    data = request.json
+    p_id = data.get('p_id')
+    new_stock = data.get("new_stock_more")
+    return functions.add_x_to_product_stock(new_stock , p_id)
+
+def price_manip():
+    data = request.json
+    p_id = data.get("p_id")
+    new_price = data.get("new_price")
+    return functions.price_manip(p_id , new_price)
+
 # === User Login Pages & Methods ===
 @app.route('/login/', methods=['POST'])
 def login():
