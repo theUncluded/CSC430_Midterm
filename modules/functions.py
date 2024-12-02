@@ -16,7 +16,6 @@ def dec_serializer(o):
     if isinstance(o, decimal.Decimal):
         return float(o)
 
-
 # =======================SQL ACTIONS=======================
 #connects to db and returns db obj as future callable
 def conn_2_db():
@@ -89,6 +88,7 @@ def current_cart_db_update(users_email):
     """
 
     cursor.execute(MOST_RECENT_CART_QUERY)
+
 def save_cart(user_id, cart_items):
     try:
         print(f"Received user_id: {user_id}, cart_items: {cart_items}")
@@ -232,7 +232,6 @@ def create_user(input_name, input_email, input_password):
         return None
 
 
-
 def check_password(password, hashed_password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password)#turns the password into binary and then compares it with the hashed password
 
@@ -341,3 +340,29 @@ def add_new_product(p_name , p_price , p_stock):
     except Exception as e:
         print(e)
 
+# change product price with product id and new price arguments
+def price_manip(p_id , new_price):
+    QUERY = f"""
+    UPDATE product
+    SET price = {new_price}
+    WHERE product_id = {p_id};
+    """
+    try:
+        cursor.execute(QUERY)
+        print("Price update successful!")
+    except Exception as e:
+        print(e)
+
+# change the name of a product in the database via a reference to its id
+def product_name_change(p_id , new_name):
+    QUERY =f"""
+    UPDATE product
+    SET product_name = {new_name}
+    WHERE product_id = {p_id};
+    """
+
+    try:
+        cursor.execute(QUERY)
+        print("Name update successful!")
+    except Exception as e:
+        print(e)
