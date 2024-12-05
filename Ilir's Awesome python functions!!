@@ -114,3 +114,7 @@ def check_out_user(users_id):
 
 cursor.close()
 mydb.close()
+
+
+
+# This is me testing using git on my pc
