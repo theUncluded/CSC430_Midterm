@@ -43,7 +43,7 @@ export const CartProvider = ({ children }) => {
         if (!currentUserId) return;
 
         try {
-            const response = await fetch('http://127.0.0.1:8080/cart/save', {
+            const response = await fetch('https://four30backend.onrender.com/cart/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: currentUserId, cart_items: cartItems })
@@ -62,7 +62,7 @@ export const CartProvider = ({ children }) => {
         if (!currentUserId) return;
 
         try {
-            const response = await fetch(`http://127.0.0.1:8080/cart/${currentUserId}`);
+            const response = await fetch(`https://four30backend.onrender.com/cart/${currentUserId}`);
             if (!response.ok) {
                 throw new Error(`Error fetching cart: ${response.statusText}`);
             }
@@ -76,7 +76,7 @@ export const CartProvider = ({ children }) => {
     // Checkout function that deducts stock from the database
     const checkout = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8080/checkout', {
+            const response = await fetch('https://four30backend.onrender.com/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: currentUserId, cart_items: cartItems })

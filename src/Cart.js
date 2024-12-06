@@ -24,7 +24,7 @@ const Cart = ({ onClose }) => {
                 ) : (
                     cartItems.map((item) => (
                         <div key={item.product_id} className="cart-item">
-                            <img src={`/Images/p${item.product_id}.jpg`} alt={item.title} className="cart-item-image" onError={(e) => e.target.src = '/images/default.jpg'}/>
+                            <img src={`/Images/${item.product_id}.jpg`} alt={item.title} className="cart-item-image" onError={(e) => e.target.src = '/images/default.jpg'}/>
                             <div className="cart-item-details">
                                 <p className="cart-item-title" title={item.title}>{item.title}</p>
                                 <p className="cart-item-price">
