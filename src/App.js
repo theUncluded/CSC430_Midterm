@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Header from './Header';
+import Navbar from './Navbar';
 import ProductList from './ProductList';
 import ProductGrid from './ProductGrid';
 import AdminPage from './AdminPage';
@@ -17,7 +17,7 @@ function App() {
                 <CartProvider>
                     <Router>
                         <div className="App">
-                            <Header />
+                            <Navbar /> {/* Use Navbar instead of Header */}
                             <Routes>
                                 <Route path="/" element={<ProductGrid />} />
                                 <Route path="/products" element={<ProductList />} />

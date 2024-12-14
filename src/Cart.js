@@ -15,9 +15,9 @@ const Cart = ({ onClose }) => {
     return (
         <div className="cart-sidebar open">
             <div className="cart-header">
-                <h2>Your Cart</h2>
-                <button className="close-btn" onClick={onClose}>Close</button>
-            </div>
+            <h2>Your Cart</h2>
+             <button className="close-btn" onClick={onClose}>×</button> {/* Use "×" for the close button */}
+        </div>
             <div className="cart-items">
                 {cartItems.length === 0 ? (
                     <p>No items in your cart</p>

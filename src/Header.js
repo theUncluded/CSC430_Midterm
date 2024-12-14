@@ -5,6 +5,7 @@ import { useCart } from './CartContext';
 import { UserContext } from './UserContext';
 import './Header.css';
 
+
 const Header = () => {
     const { cartItems, fetchCartFromDB } = useCart();
     const [cartOpen, setCartOpen] = useState(false);
@@ -40,8 +41,8 @@ const Header = () => {
     };
 
     const handleLoginSuccess = (userId, name) => {
-        handleLogin(userId, name);  // Update user context upon successful login
-        fetchCartFromDB(userId);    // Fetch cart from DB using userId
+        handleLogin(userId, name);
+        fetchCartFromDB(userId);
         setLoginModalOpen(false);
     };
 
@@ -126,7 +127,14 @@ const Header = () => {
             />
 
             <div className="cart-icon" onClick={toggleCart}>
-                Cart ({cartItems.reduce((count, item) => count + item.quantity, 0)})
+                <img 
+                    src="/Images/cart_icon.png" 
+                    alt="Cart Icon" 
+                    style={{ width: '24px', height: '24px' }} 
+                />
+                <span className="cart-count">
+                    {cartItems.reduce((count, item) => count + item.quantity, 0)}
+                </span>
             </div>
             {cartOpen && <Cart onClose={toggleCart} />}
         </header>
