@@ -22,7 +22,13 @@ export const CartProvider = ({ children }) => {
             setCartItems(savedCart);
         }
     }, []);
-
+    useEffect(() => {
+        if (currentUserId && cartItems.length > 0) {
+            console.log('Cart items changed, saving to DB:', cartItems); // Debug log
+            saveCartToDB(); // Save updated cart to the database
+        }
+    }, [cartItems, currentUserId]); // Trigger whenever `cartItems` or `currentUserId` changes
+    
     const addToCart = (product) => {
         setCartItems((prevItems) => {
             const existingItem = prevItems.find(item => item.product_id === product.product_id);
@@ -36,7 +42,6 @@ export const CartProvider = ({ children }) => {
                 return [...prevItems, { ...product, quantity: 1 }];
             }
         });
-        saveCartToDB();
     };
 
     const updateItemQuantity = (productId, quantity) => {
@@ -45,7 +50,6 @@ export const CartProvider = ({ children }) => {
                 item.product_id === productId ? { ...item, quantity } : item
             )
         );
-        saveCartToDB();
     };
 
     const removeFromCart = (productId) => {
@@ -54,25 +58,32 @@ export const CartProvider = ({ children }) => {
 
     // Save the cart to the database
     const saveCartToDB = async () => {
-        console.log('SAVING')
-        if (!currentUserId) return;
-
+        console.log('Attempting to save cart to DB:', cartItems); // Log cart items being sent
+        if (!currentUserId) {
+            console.error('No user ID found, skipping save.');
+            return;
+        }
+    
         try {
             const response = await fetch('http://127.0.0.1:8080/cart/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: currentUserId, cart_items: cartItems })
+                body: JSON.stringify({
+                    user_id: currentUserId,
+                    cart_items: cartItems,
+                }),
             });
-
+    
             if (!response.ok) {
                 throw new Error(`Error saving cart: ${response.statusText}`);
             }
-
-            console.log("Cart saved to database successfully.");
+    
+            console.log('Cart saved to database successfully.');
         } catch (error) {
-            console.error("Error saving cart to database:", error);
+            console.error('Error saving cart to database:', error);
         }
     };
+    
 
     // Fetch the cart from the database when the user logs in
     const fetchCartFromDB = async () => {
@@ -133,7 +144,6 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         if (currentUserId) {
             fetchCartFromDB();
-            console.log("hello")
         }
     }, [currentUserId]);
 
