@@ -11,7 +11,7 @@ export const ProductProvider = ({ children }) => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await fetch('https://four30backend.onrender.com/');
+                const response = await fetch('http://127.0.0.1:8080/');
                 const data = await response.json();
                 setProducts(data);
             } catch (error) {

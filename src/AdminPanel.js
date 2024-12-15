@@ -18,7 +18,7 @@ const AdminPanel = () => {
     });
 
     useEffect(() => {
-        fetch('https://four30backend.onrender.com/')
+        fetch('http://127.0.0.1:8080/')
             .then(response => response.json())
             .then(data => setProducts(data))
             .catch(error => console.error('Error fetching products:', error));
@@ -40,7 +40,7 @@ const AdminPanel = () => {
 
     const handleUpdateProduct = async (productId) => {
         try {
-            const response = await fetch(`https://four30backend.onrender.com/admin/update`, {
+            const response = await fetch(`http://127.0.0.1:8080/admin/update`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -67,7 +67,7 @@ const AdminPanel = () => {
 
     const handleAddProduct = async () => {
         try {
-            const response = await fetch('https://four30backend.onrender.com/add_product', {
+            const response = await fetch('http://127.0.0.1:8080/add_product', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -80,7 +80,7 @@ const AdminPanel = () => {
             const result = await response.json();
             alert(result.message);
 
-            fetch('https://four30backend.onrender.com/')
+            fetch('http://127.0.0.1:8080/')
                 .then(response => response.json())
                 .then(data => setProducts(data))
                 .catch(error => console.error('Error fetching products:', error));
